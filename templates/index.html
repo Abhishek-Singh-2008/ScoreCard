@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>ScoreCard Pro</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root{
+      --ink:#0f1117;--cream:#faf8f3;--gold:#c9922a;--gold-light:#e8c56d;
+      --gold-faint:#f9f0dc;--teal:#1d5c63;--border:#e2d9c6;
+      --green:#1a7a4a;--red:#c0392b;
+      --shadow:0 8px 40px rgba(15,17,23,.10);--radius:18px;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);min-height:100vh}
+
+    /* BANNER */
+    .banner{background:var(--ink);color:var(--cream);padding:28px 48px;display:flex;align-items:center;gap:20px}
+    .banner-icon{width:52px;height:52px;background:var(--gold);border-radius:14px;display:grid;place-items:center;font-size:26px;flex-shrink:0}
+    .banner h1{font-family:'Playfair Display',serif;font-size:2.1rem;letter-spacing:-.5px}
+    .banner p{font-size:.85rem;opacity:.55;margin-top:3px}
+
+    /* UPLOAD */
+    .upload-panel{max-width:900px;margin:48px auto;padding:0 24px}
+    .upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+    @media(max-width:600px){.upload-grid{grid-template-columns:1fr}}
+    .upload-box{border:2px dashed var(--border);border-radius:var(--radius);background:#fff;padding:34px 22px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;position:relative}
+    .upload-box:hover,.upload-box.drag{border-color:var(--gold);background:var(--gold-faint)}
+    .upload-box.done{border-color:var(--green)}
+    .upload-box input{display:none}
+    .upload-box .icon{font-size:2.2rem;margin-bottom:10px}
+    .upload-box h3{font-size:.95rem;font-weight:600;margin-bottom:4px}
+    .upload-box p{font-size:.78rem;opacity:.5}
+    .badge{position:absolute;top:12px;right:12px;background:var(--green);color:#fff;font-size:.68rem;padding:3px 10px;border-radius:99px;display:none}
+    .upload-box.done .badge{display:block}
+
+    .org-row{margin-top:18px}
+    .org-row input{width:100%;padding:14px 18px;border:2px solid var(--border);border-radius:12px;font-family:'DM Sans',sans-serif;font-size:.9rem;background:#fff;outline:none;transition:border-color .2s;color:var(--ink)}
+    .org-row input:focus{border-color:var(--gold)}
+
+    .gen-btn{width:100%;margin-top:18px;padding:17px;background:var(--ink);color:var(--cream);border:none;border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:600;cursor:pointer;letter-spacing:.4px;transition:background .2s,transform .1s}
+    .gen-btn:hover{background:var(--teal)}
+    .gen-btn:active{transform:scale(.98)}
+    .gen-btn:disabled{opacity:.38;cursor:not-allowed}
+
+    /* PROGRESS */
+    #prog-wrap{max-width:900px;margin:0 auto 20px;padding:0 24px;display:none}
+    .prog-outer{height:5px;background:#eee;border-radius:99px;overflow:hidden}
+    .prog-inner{height:100%;background:var(--gold);border-radius:99px;transition:width .3s;width:0%}
+    .prog-label{font-size:.76rem;opacity:.45;margin-top:6px}
+
+    /* SUMMARY */
+    .summary{max-width:900px;margin:0 auto 36px;padding:0 24px;display:none}
+    .stat-row{display:flex;gap:14px;flex-wrap:wrap}
+    .stat-card{flex:1;min-width:130px;background:#fff;border-radius:14px;padding:18px 20px;border:1px solid var(--border)}
+    .stat-card .lbl{font-size:.68rem;text-transform:uppercase;letter-spacing:1px;opacity:.45;font-weight:600}
+    .stat-card .val{font-family:'Playfair Display',serif;font-size:1.9rem;color:var(--teal);margin-top:2px}
+
+    /* DL-ALL */
+    .dl-all-wrap{max-width:900px;margin:0 auto 28px;padding:0 24px;display:none;gap:12px;display:none;flex-wrap:wrap}
+    .dl-all-btn{padding:13px 28px;background:var(--gold);color:var(--ink);border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;transition:background .2s}
+    .dl-all-btn:hover{background:var(--gold-light)}
+    .dl-all-btn:disabled{opacity:.45;cursor:not-allowed}
+
+    /* CARDS */
+    .cards-section{max-width:1100px;margin:0 auto 80px;padding:0 24px}
+    .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:26px}
+    .scorecard{background:#fff;border-radius:20px;overflow:hidden;box-shadow:var(--shadow);border:1px solid var(--border);transition:transform .2s}
+    .scorecard:hover{transform:translateY(-4px)}
+
+    .sc-header{background:var(--ink);padding:22px 22px 18px;display:flex;align-items:center;gap:14px}
+    .sc-logo{width:52px;height:52px;border-radius:10px;object-fit:contain;background:#fff;padding:4px;flex-shrink:0}
+    .sc-logo-ph{width:52px;height:52px;border-radius:10px;background:var(--gold);display:grid;place-items:center;font-size:1.3rem;flex-shrink:0}
+    .sc-name{font-family:'Playfair Display',serif;font-size:1.25rem;color:var(--cream)}
+    .sc-org{font-size:.72rem;color:var(--gold-light);margin-top:2px}
+
+    .sc-badges{display:flex;gap:7px;padding:12px 22px;background:var(--gold-faint);border-bottom:1px solid var(--border);flex-wrap:wrap}
+    .sc-pill{font-size:.68rem;font-weight:700;padding:4px 11px;border-radius:99px;letter-spacing:.3px}
+
+    .sc-body{padding:18px 22px}
+    .sc-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #f0ece4}
+    .sc-row:last-child{border-bottom:none}
+    .sc-sub{flex:1;font-size:.82rem;font-weight:500}
+    .sc-bar-bg{width:80px;height:5px;background:#eee;border-radius:99px;overflow:hidden}
+    .sc-bar{height:100%;border-radius:99px}
+    .sc-num{font-size:.82rem;font-weight:700;width:30px;text-align:right}
+
+    .sc-foot{padding:13px 22px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border);background:#fdfcfa}
+    .sc-foot-info{font-size:.76rem;opacity:.45}
+    .dl-btn{padding:8px 18px;background:var(--ink);color:var(--cream);border:none;border-radius:9px;font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:600;cursor:pointer;transition:background .2s}
+    .dl-btn:hover{background:var(--teal)}
+    .dl-btn:disabled{opacity:.45;cursor:not-allowed}
+
+    .msg{text-align:center;padding:60px 20px;opacity:.35;font-size:.9rem}
+    .err{color:var(--red);font-size:.82rem;margin-top:10px;display:none}
+  </style>
+</head>
+<body>
+
+<div class="banner">
+  <div class="banner-icon">📋</div>
+  <div>
+    <h1>ScoreCard Pro</h1>
+    <p>Flask-powered · Upload CSV &amp; logo → beautiful scorecards → download as PDF</p>
+  </div>
+</div>
+
+<!-- UPLOAD -->
+<div class="upload-panel">
+  <div class="upload-grid">
+    <label class="upload-box" id="csv-box">
+      <input type="file" id="csv-input" accept=".csv"/>
+      <div class="badge">✓ Ready</div>
+      <div class="icon">📄</div>
+      <h3>Student Scores CSV</h3>
+      <p>First column = Name, rest = subjects<br/>Drag &amp; drop or click</p>
+    </label>
+    <label class="upload-box" id="logo-box">
+      <input type="file" id="logo-input" accept="image/*"/>
+      <div class="badge">✓ Ready</div>
+      <div class="icon">🏫</div>
+      <h3>School Logo <span style="opacity:.5;font-weight:400">(optional)</span></h3>
+      <p>PNG, JPG or SVG<br/>Appears on every scorecard &amp; PDF</p>
+    </label>
+  </div>
+  <div class="org-row">
+    <input type="text" id="org-name" placeholder="School / Organisation name (e.g. Delhi Public School)"/>
+  </div>
+  <p class="err" id="err-msg"></p>
+  <button class="gen-btn" id="gen-btn" disabled>✨ Generate Scorecards</button>
+</div>
+
+<!-- PROGRESS -->
+<div id="prog-wrap">
+  <div class="prog-outer"><div class="prog-inner" id="prog-bar"></div></div>
+  <div class="prog-label" id="prog-label">Sending to server…</div>
+</div>
+
+<!-- SUMMARY -->
+<div class="summary" id="summary">
+  <div class="stat-row" id="stat-row"></div>
+</div>
+
+<!-- DL ALL -->
+<div class="dl-all-wrap" id="dl-all-wrap" style="display:none">
+  <button class="dl-all-btn" id="dl-all-btn">⬇ Download All as PDF</button>
+</div>
+
+<!-- CARDS -->
+<div class="cards-section">
+  <div class="cards-grid" id="cards-grid">
+    <div class="msg">Upload a CSV to generate scorecards.</div>
+  </div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────────
+let csvFile = null, logoFile = null;
+let state = { students: [], subjects: [], org: '' };
+
+// ── File pickers ───────────────────────────────────────────────────────────────
+document.getElementById('csv-input').addEventListener('change', function(){
+  csvFile = this.files[0];
+  setDone('csv-box', !!csvFile);
+  checkReady();
+});
+document.getElementById('logo-input').addEventListener('change', function(){
+  logoFile = this.files[0];
+  setDone('logo-box', !!logoFile);
+});
+
+// Drag & drop
+['csv-box','logo-box'].forEach(id => {
+  const box = document.getElementById(id);
+  box.addEventListener('dragover', e => { e.preventDefault(); box.classList.add('drag'); });
+  box.addEventListener('dragleave', () => box.classList.remove('drag'));
+  box.addEventListener('drop', e => {
+    e.preventDefault(); box.classList.remove('drag');
+    const dt = new DataTransfer();
+    dt.items.add(e.dataTransfer.files[0]);
+    const inp = box.querySelector('input');
+    inp.files = dt.files;
+    inp.dispatchEvent(new Event('change'));
+  });
+});
+
+function setDone(id, done){
+  document.getElementById(id).classList.toggle('done', done);
+}
+function checkReady(){
+  document.getElementById('gen-btn').disabled = !csvFile;
+}
+function showErr(msg){ const e=document.getElementById('err-msg'); e.textContent=msg; e.style.display=msg?'block':'none'; }
+
+// ── Generate ───────────────────────────────────────────────────────────────────
+document.getElementById('gen-btn').addEventListener('click', async () => {
+  if (!csvFile) return;
+  showErr('');
+  setProgress(true, 20, 'Sending CSV to server…');
+
+  const fd = new FormData();
+  fd.append('csv', csvFile);
+
+  try {
+    const res = await fetch('/api/parse', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (!res.ok) { showErr(data.error || 'Server error'); setProgress(false); return; }
+
+    setProgress(true, 100, 'Done!');
+    state.students = data.students;
+    state.subjects = data.subjects;
+    state.org = document.getElementById('org-name').value.trim() || 'Student Report Card';
+
+    renderSummary(data.summary);
+    renderCards(data.students, data.subjects);
+
+    setTimeout(() => { setProgress(false); }, 600);
+    document.querySelector('.cards-section').scrollIntoView({ behavior: 'smooth' });
+
+  } catch(err) {
+    showErr('Network error: ' + err.message);
+    setProgress(false);
+  }
+});
+
+// ── Progress ───────────────────────────────────────────────────────────────────
+function setProgress(show, pct, label){
+  document.getElementById('prog-wrap').style.display = show ? 'block' : 'none';
+  document.getElementById('prog-bar').style.width = (pct||0) + '%';
+  document.getElementById('prog-label').textContent = label || '';
+}
+
+// ── Summary ────────────────────────────────────────────────────────────────────
+function renderSummary(s){
+  document.getElementById('stat-row').innerHTML = `
+    <div class="stat-card"><div class="lbl">Students</div><div class="val">${s.count}</div></div>
+    <div class="stat-card"><div class="lbl">Class Average</div><div class="val">${s.avg}</div></div>
+    <div class="stat-card"><div class="lbl">Top Scorer</div><div class="val" style="font-size:1.15rem;color:var(--gold)">${s.top}</div></div>
+    <div class="stat-card"><div class="lbl">Subjects</div><div class="val">${s.subjects}</div></div>`;
+  document.getElementById('summary').style.display = 'block';
+  const dw = document.getElementById('dl-all-wrap');
+  dw.style.display = 'flex';
+}
+
+// ── Cards ──────────────────────────────────────────────────────────────────────
+function barColor(pct){ return pct>=75?'#1a7a4a':pct>=50?'#c9922a':'#c0392b'; }
+
+function renderCards(students, subjects){
+  const grid = document.getElementById('cards-grid');
+  grid.innerHTML = '';
+  const logoURL = logoFile ? URL.createObjectURL(logoFile) : null;
+
+  students.forEach((s, i) => {
+    const card = document.createElement('div');
+    card.className = 'scorecard';
+
+    const logoHTML = logoURL
+      ? `<img class="sc-logo" src="${logoURL}" alt="logo"/>`
+      : `<div class="sc-logo-ph">🏫</div>`;
+
+    let rows = '';
+    subjects.forEach(sub => {
+      const val = s.scores[sub] || 0;
+      const pct = Math.min(100, val);
+      const col = barColor(pct);
+      rows += `<div class="sc-row">
+        <div class="sc-sub">${sub}</div>
+        <div class="sc-bar-bg"><div class="sc-bar" style="width:${pct}%;background:${col}"></div></div>
+        <div class="sc-num" style="color:${col}">${val}</div>
+      </div>`;
+    });
+
+    const org = document.getElementById('org-name').value.trim() || 'Student Report Card';
+
+    card.innerHTML = `
+      <div class="sc-header">${logoHTML}<div><div class="sc-name">${s.name}</div><div class="sc-org">${org}</div></div></div>
+      <div class="sc-badges">
+        <span class="sc-pill" style="background:#0f1117;color:#fff">Total: ${Math.round(s.total)}</span>
+        <span class="sc-pill" style="background:#1d5c63;color:#fff">Avg: ${s.avg.toFixed(1)}</span>
+        <span class="sc-pill" style="background:${s.grade_color};color:#fff">Grade: ${s.grade}</span>
+        <span class="sc-pill" style="background:#888;color:#fff">Rank #${s.rank}</span>
+      </div>
+      <div class="sc-body">${rows}</div>
+      <div class="sc-foot">
+        <span class="sc-foot-info">${subjects.length} subjects · ${s.pct.toFixed(0)}% overall</span>
+        <button class="dl-btn" id="dlbtn-${i}" onclick="downloadOne('${s.name}', ${i})">⬇ PDF</button>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+// ── PDF download helpers ────────────────────────────────────────────────────────
+async function submitPDF(target) {
+  const fd = new FormData();
+  fd.append('students', JSON.stringify(state.students));
+  fd.append('subjects', JSON.stringify(state.subjects));
+  fd.append('org_name', state.org);
+  fd.append('target', target);
+  if (logoFile) fd.append('logo', logoFile);
+
+  const res = await fetch('/api/pdf', { method: 'POST', body: fd });
+  if (!res.ok) { const d=await res.json(); throw new Error(d.error||'PDF error'); }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = target === 'all' ? 'All_ScoreCards.pdf' : `ScoreCard_${target.replace(/\s+/g,'_')}.pdf`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+window.downloadOne = async function(name, idx) {
+  const btn = document.getElementById(`dlbtn-${idx}`);
+  btn.textContent = '⏳…'; btn.disabled = true;
+  try { await submitPDF(name); }
+  catch(e) { alert('Error: ' + e.message); }
+  btn.textContent = '⬇ PDF'; btn.disabled = false;
+};
+
+document.getElementById('dl-all-btn').addEventListener('click', async function(){
+  this.disabled = true; this.textContent = '⏳ Generating…';
+  setProgress(true, 50, 'Building PDF on server…');
+  try {
+    await submitPDF('all');
+    setProgress(true, 100, 'Done!');
+    setTimeout(() => setProgress(false), 800);
+  } catch(e) {
+    alert('Error: ' + e.message);
+    setProgress(false);
+  }
+  this.disabled = false; this.textContent = '⬇ Download All as PDF';
+});
+</script>
+</body>
+</html>
